@@ -1,0 +1,7 @@
+googletrans==3.1.0a0
+transformers
+datasets
+pytorch_lightning
+torchmetrics==0.6.0
+tqdm
+sentencepiece
