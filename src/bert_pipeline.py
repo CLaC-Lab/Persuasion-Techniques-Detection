@@ -26,32 +26,35 @@ from labels import LABEL_COLUMNS
 
 DATA_PATH = "drive/MyDrive/BERT/new-data"
 
-"""Config"""
+### CONFIG ###
 # ----------   ---------------   -------------  -----------
+# file system config
 MODEL = "roberta-base"
 ID = "new-aug-drop-over-tra-en"
 LANG = "en"
+
+# training config
+MAX_TOKEN_COUNT = 300
+BATCH_SIZE = 8
+N_EPOCHS = 10
 # ----------   ---------------   -------------  -----------
 
 
 def load_data():
+  """
+  load training data, by language
+  """
   return pd.read_csv(f"{DATA_PATH}/{ID}/{LANG}/{LANG}.csv")
-
-tokenizer = transformers.AutoTokenizer.from_pretrained(MODEL)
-MAX_TOKEN_COUNT = 300
 
 
 def train_model(train_split, valid_df):
 
-  BATCH_SIZE = 8
-
-
+  tokenizer = transformers.AutoTokenizer.from_pretrained(MODEL)
   train_df = train_split[~(train_split[LABEL_COLUMNS]==0).all(axis=1)]
 
   steps_per_epoch=len(train_df) // BATCH_SIZE
   total_training_steps = steps_per_epoch * N_EPOCHS
   warmup_steps = total_training_steps // 5
-  warmup_steps, total_training_steps
 
 
   model = BERTTagger(
@@ -136,6 +139,8 @@ def run(run_num):
     for col in LABEL_COLUMNS:
       test_df[col].values[:] = 0
 
+    tokenizer = transformers.AutoTokenizer.from_pretrained(MODEL)
+
     dataset = TextDataset(
       test_df.copy(),
       tokenizer,
@@ -184,7 +189,6 @@ def get_pred(lang_to_pred, run_num):
   path = f"{DATA_PATH}/{ID}/{LANG}/model/{MODEL}/{run_num}/{lang_to_pred}"
   return f"{path}/{LANG}-pred-{lang_to_pred}.txt"
 
-N_EPOCHS = 10
 
 RUN_NUM = 1
 run(RUN_NUM)
