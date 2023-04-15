@@ -154,7 +154,7 @@ def predict(trained_model, LANG, model_run__base_path):
     make_dir_if_none(model_run__pred_path)
 
     # initialize test set path to read
-    test_set_path = os.path.join("..", "semeval2023task3bundle-v4", f"dev_df_{lang_to_pred}")
+    test_set_path = os.path.join("..", "semeval2023task3bundle-v4", f"dev_df_{lang_to_pred}.csv")
     test_df = pd.read_csv(test_set_path)
 
     # set all test set labels to 0
