@@ -6,15 +6,17 @@ import pytorch_lightning as pl
 
 from torch.optim import AdamW
 
-MODEL = "roberta-base"
-
+MODEL_NAME="roberta-base"
 class BERTTagger(pl.LightningModule):
   def __init__(self, n_classes: int, n_training_steps=None, n_warmup_steps=None):
     super().__init__()
-    self.bert = transformers.AutoModel.from_pretrained(MODEL, return_dict=True)
+    print("LOADING PRE-TRAINED BERT")
+    self.bert = transformers.AutoModel.from_pretrained(MODEL_NAME, return_dict=True)
+    print("SETTING CLASSIFICATION LAYER")
     self.classifier = torch.nn.Linear(self.bert.config.hidden_size, n_classes)
     self.n_training_steps = n_training_steps
     self.n_warmup_steps = n_warmup_steps
+    print("SETTING LOSS FUNCTION")
     self.criterion = torch.nn.BCELoss()
 
   def forward(self, input_ids, attention_mask, labels=None):
@@ -26,7 +28,7 @@ class BERTTagger(pl.LightningModule):
         loss = self.criterion(output, labels)
     return loss, output
 
-  def training_step(self, batch):
+  def training_step(self, batch, batch_idx):
     input_ids = batch["input_ids"]
     attention_mask = batch["attention_mask"]
     labels = batch["labels"]
@@ -34,7 +36,7 @@ class BERTTagger(pl.LightningModule):
     self.log("train_loss", loss, prog_bar=True, logger=True)
     return {"loss": loss, "predictions": outputs, "labels": labels}
 
-  def validation_step(self, batch):
+  def validation_step(self, batch, batch_idx):
     input_ids = batch["input_ids"]
     attention_mask = batch["attention_mask"]
     labels = batch["labels"]
@@ -42,7 +44,7 @@ class BERTTagger(pl.LightningModule):
     self.log("val_loss", loss, prog_bar=True, logger=True)
     return loss
 
-  def test_step(self, batch):
+  def test_step(self, batch, batch_idx):
     input_ids = batch["input_ids"]
     attention_mask = batch["attention_mask"]
     labels = batch["labels"]
@@ -71,8 +73,9 @@ class BERTTagger(pl.LightningModule):
     )
     return dict(
       optimizer=optimizer,
-      lr_scheduler=dict(
-        scheduler=scheduler,
-        interval='step'
-      )
+      # COMMENTED OUT DUE TO ENVIRONMENT ISSUES
+      # lr_scheduler=dict(
+      #   scheduler=scheduler,
+      #   interval='step'
+      # )
     )

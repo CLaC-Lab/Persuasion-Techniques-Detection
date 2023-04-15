@@ -77,7 +77,7 @@ python3 src/augmentation.py
 python3 src/bert_pipeline.py <TRAIN_LANG> <RUN_NUM>
 ```
 
-Configure `MODEL_NAME` by hardcoding in `src/bert_pipeline.py` before run
+Configure `MODEL_NAME` by hardcoding in `src/bert_pipeline.py` and `src/model.py` before run
 
 #### Example
 

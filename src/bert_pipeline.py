@@ -44,14 +44,14 @@ def load_train_data(TRAIN_LANG):
   """
   load training data, by language
   """
-  input_train_file = os.path.join("..", "semeval2023task3bundle-v4", f"train_df_{TRAIN_LANG}.csv")
+  input_train_file = os.path.join("..", "semeval2023task3bundle-v4", f"train_df_aug_{TRAIN_LANG}.csv")
   return pd.read_csv(input_train_file)
 
 def train_model(train_split, valid_df):
 
-  # pull in train set
+  # drop nones
+  print("DROPPING NONES")
   train_df = train_split[~(train_split[LABEL_COLUMNS]==0).all(axis=1)]
-
 
   # initialize hyper parameters
   steps_per_epoch=len(train_df) // BATCH_SIZE
@@ -59,17 +59,21 @@ def train_model(train_split, valid_df):
   warmup_steps = total_training_steps // 5
 
   # initialize model
+  print("LOADING INITIAL MODEL")
   model = BERTTagger(
     n_classes=len(LABEL_COLUMNS),
     n_warmup_steps=warmup_steps,
-    n_training_steps=total_training_steps
+    n_training_steps=total_training_steps,
+    MODEL_NAME=MODEL_NAME
   )
 
   # initialize text tokenizer
+  print("LOADING TOKENIZER")
   tokenizer = transformers.AutoTokenizer.from_pretrained(MODEL_NAME)
 
 
   # initialize data module
+  print("LOADING DATAMODULE")
   data_module = TextDataModule(
     train_df,
     valid_df,
@@ -95,6 +99,7 @@ def train_model(train_split, valid_df):
   early_stopping_callback = EarlyStopping(monitor='val_loss', min_delta=0.00, patience=2)
 
   # initialize trainer
+  print("LOADING TRAINER")
   trainer = pl.Trainer(
     logger=logger,
     checkpoint_callback=checkpoint_callback,
@@ -206,6 +211,7 @@ def predict(trained_model, LANG, model_run__base_path):
 
 def run(TRAIN_LANG, RUN_NUM):
 
+  print("LOADING DATA")
   # load test data
   df = load_train_data(TRAIN_LANG)
 
@@ -213,6 +219,7 @@ def run(TRAIN_LANG, RUN_NUM):
   train_split_df, valid_split_df = train_test_split(df, test_size=0.2)
 
   # train model
+  print("TRAINING MODEL")
   trained_model = train_model(train_split_df, valid_split_df)
 
   # set base path directory for model run
