@@ -40,6 +40,13 @@ N_EPOCHS = 10
 # ----------   ---------------   -------------  ----------- #
 
 
+# utility function
+def make_dir_if_none(filepath):
+  try:
+    os.mkdir(filepath)
+  except:
+    pass
+
 def load_train_data(TRAIN_LANG):
   """
   load training data, by language
@@ -279,10 +286,3 @@ if __name__ == "__main__":
   """)
 
   run(TRAIN_LANG, RUN_NUM)
-
-# utility function
-def make_dir_if_none(filepath):
-  try:
-    os.mkdir(filepath)
-  except:
-    pass
