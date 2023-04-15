@@ -7,109 +7,70 @@ Original file is located at
 """
 
 
-
+import os
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
+
 from googletrans import Translator
 
+from labels import LABEL_COLUMNS
 
-INPUT_DATA_PATH = "drive/MyDrive/BERT/data"
-OUTPUT_DATA_PATH = "drive/MyDrive/BERT/new-data"
-ID = "new-aug-drop-over-tra"
+translator = Translator()
+
 LANGS = ['en', 'fr', 'ge', 'it', 'po', 'ru']
-
-mins = [500, 300, 200, 250, 100, 100]
-maxs = [500, 800, 750, 300, 200, 200]
+column_count_to_augment = [500, 300, 200, 250, 100, 100]
+column_count_to_drop = [500, 800, 750, 300, 200, 200]
 
 
 def load_lang_dfs():
-  return [pd.read_csv(f"{INPUT_DATA_PATH}/original/semeval-{lang}.csv") for lang in LANGS]
+  paths = [os.path.join("..", "semeval2023task3bundle-v4", f"train_df_{lang}.csv") for lang in LANGS]
+  return [pd.read_csv(file) for file in paths]
 
-def find_train_df(curr_lang):
-  return [lang_df for lang, lang_df in zip(LANGS, lang_dfs) if lang == curr_lang][0]
+def augment(curr_lang, under_rep_min_threshold):
 
-def get_other_lang_dfs(curr_lang):
-    other_lang_dfs = [lang_df for lang, lang_df in zip(LANGS, lang_dfs) if lang != curr_lang]
-    return other_lang_dfs
+  lang_dfs = load_lang_dfs()
 
-def augment_new(curr_lang, min_):
-  curr_df = find_train_df(curr_lang)
-  other_lang_dfs = get_other_lang_dfs(curr_lang)
+  curr_df = [lang_df for lang, lang_df in zip(LANGS, lang_dfs) if lang == curr_lang][0]
+  other_lang_dfs = [lang_df for lang, lang_df in zip(LANGS, lang_dfs) if lang != curr_lang]
 
-  cols_to_aug = [col for col in LABEL_COLUMNS if curr_df[col].sum() < min_]
+  cols_to_aug = [col for col in LABEL_COLUMNS if curr_df[col].sum() < under_rep_min_threshold]
 
   new_df = curr_df.copy()
-  lang_to_trans = translator.detect(new_df.iloc[0].text).lang
+  print('TEXT', new_df.iloc[0].text)
+  target_lang_to_trans = translator.detect(new_df.iloc[0].text).lang
 
   for other_lang_df in other_lang_dfs:
 
-    other_lang_col = other_lang_df[(other_lang_df[cols_to_aug] == 1).any(axis=1)]
+    other_lang_df_under_reps_only = other_lang_df[(other_lang_df[cols_to_aug] == 1).any(axis=1)]
 
-    print('translating', other_lang_col.iloc[0]['text'], "to", lang_to_trans)
-    other_lang_col['text'] = other_lang_col['text'].apply(lambda x: translator.translate(x, dest=lang_to_trans).text)
+    print('translating', other_lang_df_under_reps_only.iloc[0]['text'], "to", target_lang_to_trans)
+    other_lang_df_under_reps_only['text'] = other_lang_df_under_reps_only['text'].apply(lambda x: translator.translate(x, dest=target_lang_to_trans).text)
 
-    print('adding', len(other_lang_col), "from", other_lang_col.iloc[0]['text'])
-    new_df = pd.concat([new_df, other_lang_col])
-    print('new df', len(new_df))
+    print('adding', len(other_lang_df_under_reps_only), "from", other_lang_df_under_reps_only.iloc[0]['text'])
+    new_df = pd.concat([new_df, other_lang_df_under_reps_only])
+    print(f'{curr_lang} df, new length', len(new_df))
 
-  print(f"{curr_lang} new augmented")
+  print(f"{curr_lang} augmented")
   return new_df
 
-def under(curr_lang, df_, max_):
-
-  over_reps = [col for col in LABEL_COLUMNS if df_[col].sum() > max_]
-  print("dropping single occurrence over reps", over_reps)
-
-  print(df_['Whataboutism'].sum())
-  under_df = df_[~( (df_[over_reps] == 1).any(1) & (df_[LABEL_COLUMNS].apply(lambda x: sum(x), axis=1) == 1))]
-  print(under_df['Whataboutism'].sum())
-
-  print(f"{curr_lang} augmented")  
-  df_[LABEL_COLUMNS].sum().sort_values().plot(kind="barh")
-  plt.show()
-
-  print(f"{curr_lang} augmented, under")
-  under_df[LABEL_COLUMNS].sum().sort_values().plot(kind="barh")
-  plt.show()
-
+def drop_over_rep_single_non_occurring(df_to_under_sample, over_rep_threshold):
+  over_represented_columns = [column for column in LABEL_COLUMNS if df_to_under_sample[column].sum() > over_rep_threshold]
+  under_df = df_to_under_sample[~((df_to_under_sample[over_represented_columns] == 1).any(1) & (df_to_under_sample[LABEL_COLUMNS].apply(lambda x: sum(x), axis=1) == 1))]
   return under_df
 
-def drop_over_rep_co_occurences(df, over_rep_threshold):
-  label_columns = df.columns[3:]
-
-  df_noco = df[df[label_columns].apply(lambda x: sum(x), axis=1) == 1]
-  df_co = df[df[label_columns].apply(lambda x: sum(x), axis=1) > 1]
-
-  cols_to_drop = [col for col in label_columns if df_co[col].sum() > over_rep_threshold]
-  df_noco_dropped = df_noco[~(df_noco[cols_to_drop].eq(1).any(1))]
-
-  return pd.concat([df_co, df_noco_dropped])
-
-def drop_top_2(df):
-  label_columns = df.columns[3:]
-
-  cols_drop = df[label_columns].sum().sort_values(ascending=False).index.tolist()[:6]
-  cols_keep = [col for col in label_columns if col not in cols_drop]
-
-  dropped_df = df[~((df[cols_drop].eq(1).any(1)) & (df[cols_keep].sum() == 0))]
-  return dropped_df
-
-def print_distribution(df):
-  label_columns = df.columns[3:]
-  df[label_columns].sum().sort_values().plot(kind="barh", title=lang_to_aug)
-
-def save_df(lang, df):
-  df.to_csv(f"{OUTPUT_DATA_PATH}/{ID}/semeval-{ID}-{lang}.csv", index=False)
-
-def __main__():
-  translator = Translator()
-  lang_dfs = load_lang_dfs()
-  LABEL_COLUMNS = lang_dfs[0].columns[3:]
-
-  for lang_to_aug, min__, max__ in zip(LANGS, mins, maxs):
-    augment_new_df = augment_new(lang_to_aug, min__)
-    under_df = under(lang_to_aug, augment_new_df, max__)
-    save_df(lang_to_aug, under_df)
+def print_distribution(df, lang_to_aug = ""):
+  df[LABEL_COLUMNS].sum().sort_values().plot(kind="barh", title=lang_to_aug)
 
 
+def main():
+  for lang_to_augment, lang_column_count_to_augment, lang_column_count_to_drop in zip(LANGS, column_count_to_augment, column_count_to_drop):
+    augmented_df = augment(lang_to_augment, lang_column_count_to_augment)
+    df = drop_over_rep_single_non_occurring(augmented_df, lang_column_count_to_drop)
+
+    output_file = os.path.join("..", "semeval2023task3bundle-v4", f"train_df_aug_{lang_to_augment}.csv")
+    df.to_csv(output_file, index=False)
+
+    break
+
+
+if __name__ == "__main__":
+   main()
