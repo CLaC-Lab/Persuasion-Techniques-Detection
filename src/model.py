@@ -8,7 +8,7 @@ from torch.optim import AdamW
 
 MODEL_NAME="roberta-base"
 class BERTTagger(pl.LightningModule):
-  def __init__(self, n_classes: int, n_training_steps=None, n_warmup_steps=None):
+  def __init__(self, n_classes: int, n_training_steps=None, n_warmup_steps=None, MODEL_NAME=MODEL_NAME):
     super().__init__()
     print("LOADING PRE-TRAINED BERT")
     self.bert = transformers.AutoModel.from_pretrained(MODEL_NAME, return_dict=True)
