@@ -1,7 +1,6 @@
 **/.DS_Store
-data/*
-era5/*
-global_fishing_watch/*
+semeval2023task3bundle-v4/*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
