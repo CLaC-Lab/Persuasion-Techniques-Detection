@@ -29,19 +29,22 @@ LABEL_COLUMNS = [
    'Questioning_the_Reputation']
 
 
+LANGS = ['en', 'fr', 'ge', 'it', 'po', 'ru']
+
+
 def read_process_write(split, lang):
 
    labels_input_file = os.path.join('../semeval2023task3bundle-v4/data', lang, f'{split}-labels-subtask-3.txt')
    text_input_file = os.path.join('../semeval2023task3bundle-v4/data', lang, f'{split}-labels-subtask-3.template')
 
    df_labels = pd.read_csv(labels_input_file, sep='\t',
-                            header=None,
-                            names={'article': int, 'paragraph': int, 'labels': str},
-                            on_bad_lines='skip')
+                           header=None,
+                           names={'article': int, 'paragraph': int, 'labels': str},
+                           on_bad_lines='skip')
    df_text = pd.read_csv(text_input_file, sep='\t',
-                          header=None,
-                          names={'article': int, 'paragraph': int, 'text': str},
-                          on_bad_lines='skip')
+                         header=None,
+                         names={'article': int, 'paragraph': int, 'text': str},
+                         on_bad_lines='skip')
 
    df_labels['labels'] = np.where(df_labels['labels'].isna(), '', df_labels['labels'])
 
@@ -59,8 +62,6 @@ def main():
 
    if not os.path.isdir('../data'):
       os.makedirs('../data')
-
-   LANGS = ['en', 'fr', 'ge', 'it', 'po', 'ru']
 
    for lang in LANGS:
       print(lang)
