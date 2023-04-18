@@ -2,7 +2,31 @@ import os
 import pandas as pd
 import numpy as np
 
-from labels import LABEL_COLUMNS
+
+LABEL_COLUMNS = [
+   'Appeal_to_Authority',
+   'Appeal_to_Popularity',
+   'Appeal_to_Values',
+   'Appeal_to_Fear-Prejudice',
+   'Flag_Waving',
+   'Causal_Oversimplification',
+   'False_Dilemma-No_Choice',
+   'Consequential_Oversimplification',
+   'Straw_Man',
+   'Red_Herring',
+   'Whataboutism',
+   'Slogans',
+   'Appeal_to_Time',
+   'Conversation_Killer',
+   'Loaded_Language',
+   'Repetition',
+   'Exaggeration-Minimisation',
+   'Obfuscation-Vagueness-Confusion',
+   'Name_Calling-Labeling',
+   'Doubt',
+   'Guilt_by_Association',
+   'Appeal_to_Hypocrisy',
+   'Questioning_the_Reputation']
 
 
 def read_process_write(split, lang):
