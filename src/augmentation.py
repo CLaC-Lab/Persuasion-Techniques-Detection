@@ -69,8 +69,6 @@ def main():
     output_file = os.path.join("..", "semeval2023task3bundle-v4", f"train_df_aug_{lang_to_augment}.csv")
     df.to_csv(output_file, index=False)
 
-    break
-
 
 if __name__ == "__main__":
    main()
